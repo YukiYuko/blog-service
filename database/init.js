@@ -15,7 +15,7 @@ mongoose.Promise =  global.Promise;
 
 exports.connect = ()=>{
   // 连接数据库
-  mongoose.connect(db);
+  mongoose.connect(db, { useNewUrlParser: true });
 
   // 设置重连次数
   let maxConnectTimes = 3;
