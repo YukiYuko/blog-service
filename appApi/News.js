@@ -29,7 +29,7 @@ router.get('/insertNews',async(ctx)=>{
   ctx.body="开始导入数据"
 
 });
-
+// 获取新闻列表
 router.get('/newsList', async (ctx) => {
   let page = ctx.query.page || 1;
   let limit = ctx.query.limit || 10;
@@ -43,5 +43,13 @@ router.get('/newsList', async (ctx) => {
       console.log(error);
       ctx.body={code:500,message:'失败', data: error}
     });
+});
+// 新建新闻
+router.post('/createNews', async (ctx) => {
+  let data = ctx.request.body;
+  const News = mongoose.model('News');
+  new News(data).save().then(() => {
+    console.log("成功")
+  })
 });
 module.exports=router;
