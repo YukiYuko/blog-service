@@ -48,8 +48,12 @@ router.get('/newsList', async (ctx) => {
 router.post('/createNews', async (ctx) => {
   let data = ctx.request.body;
   const News = mongoose.model('News');
-  new News(data).save().then(() => {
-    console.log("成功")
+  await new News(data).save().then((result) => {
+    ctx.body={code:200,message:'成功', data: result}
+    console.log("result",result)
+  }).catch((error) => {
+    ctx.body={code:500,message:'失败', data: error}
+    console.log("error", error)
   })
 });
 module.exports=router;
