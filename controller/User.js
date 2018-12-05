@@ -6,8 +6,23 @@
 
 //user.js
 
-const mongoose = require('mongoose');
-const User = mongoose.model('Users');
+const mongoose = require('mongoose');   //引入Mongoose
+const Schema = mongoose.Schema;         //声明Schema
+
+// timestamps 字段自动生成创建时间和修改时间
+const UserSchema = new Schema({
+  userName:{type:String},
+  nickname:{type:String},
+  headImage:{type:String},
+  sex:{type:Number},
+  age:{type:Number},
+  email:{type:String},
+  password:{type:String},
+  phone:{type:Number},
+}, { timestamps: true });
+
+const Users = mongoose.model('Users',UserSchema);
+
 
 //下面这两个包用来生成时间
 
@@ -21,9 +36,9 @@ const createToken = require('../token/createToken.js');
 //数据库的操作
 
 //根据用户名查找用户
-const findUser = (username) => {
+const findUser = (userName) => {
   return new Promise((resolve, reject) => {
-    User.findOne({username}, (err, doc) => {
+    Users.findOne({userName}, (err, doc) => {
       if (err) {
         reject(err);
       }
@@ -35,7 +50,7 @@ const findUser = (username) => {
 //找到所有用户
 const findAllUsers = () => {
   return new Promise((resolve, reject) => {
-    User.find({}, (err, doc) => {
+    Users.find({}, (err, doc) => {
       if (err) {
         reject(err);
       }
@@ -47,7 +62,7 @@ const findAllUsers = () => {
 //删除某个用户
 const delUser = function (id) {
   return new Promise((resolve, reject) => {
-    User.findOneAndRemove({_id: id}, err => {
+    Users.findOneAndRemove({_id: id}, err => {
       if (err) {
         reject(err);
       }
@@ -61,21 +76,24 @@ const delUser = function (id) {
 
 const Login = async (ctx) => {
   //拿到账号和密码
-  let username = ctx.request.body.username;
-  let password = sha1(ctx.request.body.password);//解密
-  let doc = await findUser(username);
+  let userName = ctx.request.body.userName;
+  // let password = sha1(ctx.request.body.password);//解密
+  let password = ctx.request.body.password;
+  let doc = await findUser(userName);
   if (!doc) {
     console.log('检查到用户名不存在');
     ctx.status = 200;
     ctx.body = {
-      info: false
+      info: '检查到用户名不存在',
+      success: false
     }
   } else if (doc.password === password) {
     console.log('密码一致!');
     //生成一个新的token,并存到数据库
-    let token = createToken(username);
+    let token = createToken(userName);
     console.log(token);
     doc.token = token;
+    console.log(doc);
     await new Promise((resolve, reject) => {
       doc.save((err) => {
         if (err) {
@@ -87,7 +105,7 @@ const Login = async (ctx) => {
     ctx.status = 200;
     ctx.body = {
       success: true,
-      username,
+      userName,
       token, //登录成功要创建一个新的token,应该存入数据库
       create_time: doc.create_time
     };
@@ -95,7 +113,8 @@ const Login = async (ctx) => {
     console.log('密码错误!');
     ctx.status = 200;
     ctx.body = {
-      success: false
+      success: false,
+      info: "密码错误!"
     };
   }
 };
@@ -103,14 +122,14 @@ const Login = async (ctx) => {
 //注册
 const Reg = async (ctx) => {
   let user = new User({
-    username: ctx.request.body.username,
+    userName: ctx.request.body.userName,
     password: sha1(ctx.request.body.password), //加密
-    token: createToken(this.username), //创建token并存入数据库
+    token: createToken(this.userName), //创建token并存入数据库
     create_time: moment(objectIdToTimestamp(user._id)).format('YYYY-MM-DD HH:mm:ss'),//将objectid转换为用户创建时间
   });
   //将objectid转换为用户创建时间(可以不用)
   // user.create_time = moment(objectIdToTimestamp(user._id)).format('YYYY-MM-DD HH:mm:ss');
-  let doc = await findUser(user.username);
+  let doc = await findUser(user.userName);
   if (doc) {
     console.log('用户名已经存在');
     ctx.status = 200;

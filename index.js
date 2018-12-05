@@ -8,12 +8,12 @@ let News = require('./appApi/News');
 let Users = require('./appApi/Users');
 let router = new Router();
 //引入connect
-const {connect, initSchemas} = require('./database/init.js')
+const {connect} = require('./database/init.js')
 
 //立即执行函数
 ;(async () =>{
     await connect();
-    initSchemas();
+    // initSchemas();
     router.use('/news',News.routes());
     router.use('/users',Users.routes());
     app.use(bodyParser());

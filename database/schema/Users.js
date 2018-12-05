@@ -13,4 +13,4 @@ const UserSchema = new Schema({
   phone:{type:Number},
 }, { timestamps: true });
 
-mongoose.model('Users',UserSchema);
+const Users = mongoose.model('Users',UserSchema);
