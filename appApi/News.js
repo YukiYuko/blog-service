@@ -30,12 +30,12 @@ router.get('/insertNews',async(ctx)=>{
 
 });
 // 获取新闻列表
-router.get('/newsList', async (ctx) => {
-  let page = ctx.query.page || 1;
-  let limit = ctx.query.limit || 10;
-  console.log(ctx.query)
+router.post('/newsList', async (ctx) => {
+  let page = ctx.request.body.page || 1;
+  let limit = ctx.request.body.limit || 10;
+  console.log(ctx.request.body);
   const News = mongoose.model('News');
-  await News.find().exec()
+  await News.find().skip((page - 1) * limit).limit(limit).exec()
     .then(async(result)=>{
       ctx.body={code:200,message:'成功', data: result}
     })

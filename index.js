@@ -5,6 +5,7 @@ const bodyParser = require('koa-bodyparser');
 const cors = require('koa2-cors');
 const port = 3002;
 let News = require('./appApi/News');
+let Users = require('./appApi/Users');
 let router = new Router();
 //引入connect
 const {connect, initSchemas} = require('./database/init.js')
@@ -14,6 +15,7 @@ const {connect, initSchemas} = require('./database/init.js')
     await connect();
     initSchemas();
     router.use('/news',News.routes());
+    router.use('/users',Users.routes());
     app.use(bodyParser());
     app.use(cors());
     app.use(router.routes());
