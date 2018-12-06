@@ -25,6 +25,7 @@ const UserSchema = new Schema({
 
 const Users = mongoose.model('Users',UserSchema);
 
+const {status} = require('../config/index');
 
 //下面这两个包用来生成时间
 
@@ -37,6 +38,18 @@ const sha1 = require('sha1');
 const createToken = require('../token/createToken.js');
 //数据库的操作
 
+
+//根据token获取当前登录用户信息
+const findUser_token = (token) => {
+  return new Promise((resolve, reject) => {
+    Users.findOne({token}, (err, doc) => {
+      if (err) {
+        reject(err);
+      }
+      resolve(doc);
+    });
+  });
+};
 //根据用户名查找用户
 const findUser = (userName) => {
   return new Promise((resolve, reject) => {
@@ -99,8 +112,8 @@ const Login = async (ctx) => {
     console.log('检查到用户名不存在');
     ctx.status = 200;
     ctx.body = {
-      info: '检查到用户名不存在',
-      success: false
+      info: status[403001],
+      code: 403001
     }
   } else if (doc.password === password) {
     console.log('密码一致!');
@@ -117,17 +130,17 @@ const Login = async (ctx) => {
     });
     ctx.status = 200;
     ctx.body = {
-      success: true,
       userName,
       token, //登录成功要创建一个新的token,应该存入数据库
-      create_time: doc.create_time
+      create_time: doc.create_time,
+      code: 200
     };
   } else {
     console.log('密码错误!');
     ctx.status = 200;
     ctx.body = {
-      success: false,
-      info: "密码错误!"
+      info: status[403002],
+      code: 403002
     };
   }
 };
@@ -177,6 +190,31 @@ const GetAllUsers = async (ctx) => {
   };
 };
 
+//获得单个用户
+const GetUser = async (ctx) => {
+  let token = ctx.request.body.token;
+  let userName = ctx.request.body.userName;
+  let doc = await findUser(userName);
+  console.log(doc)
+};
+//获得当前登录用户信息
+const GetUser_token = async (ctx) => {
+  let token = ctx.request.body.token;
+  let doc = await findUser_token(token);
+  console.log(doc)
+  if (doc) {
+    ctx.status = 200;
+    ctx.body = {
+      code: 200,
+      info: "请求成功",
+      data: doc
+    };
+  } else {
+
+  }
+};
+
+
 //删除某个用户
 const DelUser = async (ctx) => {
   //拿到要删除的用户id
@@ -192,5 +230,7 @@ module.exports = {
   Login,
   Reg,
   GetAllUsers,
-  DelUser
+  DelUser,
+  GetUser,
+  GetUser_token
 };

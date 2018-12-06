@@ -34,5 +34,7 @@ router.get('/insertUsers',async(ctx)=>{
 router.post("/login", UserController.Login);
 // 注册
 router.post("/register", UserController.Reg);
+// 获取用户信息
+router.post("/userInfo", UserController.GetUser_token);
 
 module.exports=router;

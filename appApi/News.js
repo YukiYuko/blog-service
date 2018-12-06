@@ -4,6 +4,7 @@ let router = new Router();
 
 const mongoose = require('mongoose');
 const fs = require('fs');
+const NewsController = require('../controller/News');
 
 
 //获取所有数据
@@ -30,20 +31,7 @@ router.get('/insertNews',async(ctx)=>{
 
 });
 // 获取新闻列表
-router.post('/newsList', async (ctx) => {
-  let page = ctx.request.body.page || 1;
-  let limit = ctx.request.body.limit || 10;
-  console.log(ctx.request.body);
-  const News = mongoose.model('News');
-  await News.find().skip((page - 1) * limit).limit(limit).exec()
-    .then(async(result)=>{
-      ctx.body={code:200,message:'成功', data: result}
-    })
-    .catch(error=>{
-      console.log(error);
-      ctx.body={code:500,message:'失败', data: error}
-    });
-});
+router.post('/newsList', NewsController.FindNewsList);
 // 新建新闻
 router.post('/createNews', async (ctx) => {
   let data = ctx.request.body;
