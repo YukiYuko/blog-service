@@ -19,6 +19,8 @@ const UserSchema = new Schema({
   email:{type:String},
   password:{type:String},
   phone:{type:Number},
+  token:{type:String},
+  create_time: Date
 }, { timestamps: true });
 
 const Users = mongoose.model('Users',UserSchema);
@@ -71,14 +73,27 @@ const delUser = function (id) {
     });
   });
 };
+//修改某个用户
+const updateUser = function (id, data) {
+  // data 新的用户的值
+  return new Promise((resolve, reject) => {
+    Users.updateOne({_id: id}, data, err => {
+      if (err) {
+        reject(err);
+      }
+      console.log('更新用户成功');
+      resolve();
+    })
+  })
+};
 
 //登录
 
 const Login = async (ctx) => {
   //拿到账号和密码
   let userName = ctx.request.body.userName;
-  // let password = sha1(ctx.request.body.password);//解密
-  let password = ctx.request.body.password;
+  let password = sha1(ctx.request.body.password);//解密
+  // let password = ctx.request.body.password;
   let doc = await findUser(userName);
   if (!doc) {
     console.log('检查到用户名不存在');
@@ -91,16 +106,14 @@ const Login = async (ctx) => {
     console.log('密码一致!');
     //生成一个新的token,并存到数据库
     let token = createToken(userName);
-    console.log(token);
     doc.token = token;
-    console.log(doc);
     await new Promise((resolve, reject) => {
       doc.save((err) => {
-        if (err) {
+        if(err){
           reject(err);
         }
         resolve();
-      });
+      })
     });
     ctx.status = 200;
     ctx.body = {
@@ -121,14 +134,14 @@ const Login = async (ctx) => {
 
 //注册
 const Reg = async (ctx) => {
-  let user = new User({
+  let user = new Users({
     userName: ctx.request.body.userName,
     password: sha1(ctx.request.body.password), //加密
     token: createToken(this.userName), //创建token并存入数据库
-    create_time: moment(objectIdToTimestamp(user._id)).format('YYYY-MM-DD HH:mm:ss'),//将objectid转换为用户创建时间
+    // create_time: moment(objectIdToTimestamp(user._id)).format('YYYY-MM-DD HH:mm:ss'),//将objectid转换为用户创建时间
   });
   //将objectid转换为用户创建时间(可以不用)
-  // user.create_time = moment(objectIdToTimestamp(user._id)).format('YYYY-MM-DD HH:mm:ss');
+  user.create_time = moment(objectIdToTimestamp(user._id)).format('YYYY-MM-DD HH:mm:ss');
   let doc = await findUser(user.userName);
   if (doc) {
     console.log('用户名已经存在');
