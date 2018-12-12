@@ -9,14 +9,19 @@ const uploadSingle = async (ctx, next) => {
   console.log(file)
   // 创建可读流
   const reader = fs.createReadStream(file.path);
-  const name = new Date().getTime();
-  const type = "." + file.type.split("/")[1];
-  let filePath = path.join(__dirname, '../public/upload/') + `/${name + type}`;
+  const name = Math.random().toString();
+  const type = file.name.split('.').pop();
+  const newFilename = `${name}.${type}`;
+  let filePath = path.join(__dirname, '../public/upload/') + `/${newFilename}`;
+  // let filePath = `public/upload/${name}.${type}`;
   // 创建可写流
   const upStream = fs.createWriteStream(filePath);
   // 可读流通过管道写入可写流
   reader.pipe(upStream);
-  return ctx.body = filePath;
+  ctx.body = {
+    code: 200,
+    data: { url: 'http://' + ctx.headers.host + '/upload/' + newFilename }
+  }
 };
 module.exports = {
   uploadSingle
