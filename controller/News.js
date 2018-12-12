@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');  //引入Mongoose
 const Schema = mongoose.Schema;         //声明Schema
+const {getId} = require('../lib/index');
 
 // timestamps 字段自动生成创建时间和修改时间
 const NewsSchema = new Schema({
@@ -28,6 +29,18 @@ const findNewsList = ({pageSize, currentPage, condition}) => {
     })
   });
 };
+// 查找单个新闻
+const findNews = (id) => {
+  return new Promise((resolve, reject) => {
+    News.find({_id: id}).exec((err, doc) => {
+      if (err){
+        reject(err)
+      } else {
+        resolve(doc);
+      }
+    })
+  })
+};
 
 
 // 获取新闻列表
@@ -44,7 +57,6 @@ const FindNewsList = async (ctx) => {
     condition
   };
   let doc = await findNewsList(data);
-  console.log(doc)
   if (doc) {
     ctx.status = 200;
     ctx.body = {
@@ -56,6 +68,18 @@ const FindNewsList = async (ctx) => {
 
   }
 };
+// 编辑新闻
+
+// 删除新闻
+const DeleteNews = async (ctx) => {
+  let id = ctx.request.body.id;
+  let _id = getId(id);
+  // 当前页
+  let doc = await findNews(_id);
+  console.log(doc)
+};
+
 module.exports = {
-  FindNewsList
+  FindNewsList,
+  DeleteNews
 };
