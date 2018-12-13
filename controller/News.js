@@ -41,6 +41,30 @@ const findNews = (id) => {
     })
   })
 };
+// 更新单个新闻
+const updateNews = (id, data) => {
+  return new Promise((resolve, reject) => {
+    News.findOneAndUpdate({_id: id}, data, (err,doc) => {
+      if (err){
+        reject(err)
+      } else {
+        resolve(doc);
+      }
+    })
+  })
+};
+// 删除单个新闻
+const deleteNews = (id) => {
+  return new Promise((resolve, reject) => {
+    News.findOneAndDelete({_id: id}, (err,doc) => {
+      if (err){
+        reject(err)
+      } else {
+        resolve(doc);
+      }
+    })
+  })
+};
 
 
 // 获取新闻列表
@@ -68,18 +92,60 @@ const FindNewsList = async (ctx) => {
 
   }
 };
-// 编辑新闻
+// 获取新闻
+const NewsDetail = async (ctx) => {
+  let id = ctx.request.body.id;
+  let _id = getId(id);
+  // 当前页
+  let doc = await findNews(_id);
+  if (doc) {
+    ctx.status = 200;
+    ctx.body = {
+      code: 200,
+      data: doc[0]
+    };
+  } else {
+
+  }
+};
+// 更新新闻
+const UpdateNews = async (ctx) => {
+  let id = ctx.request.body.id;
+  let _id = getId(id);
+  let data = ctx.request.body.data;
+  // 当前页
+  let doc = await updateNews(_id, data);
+  if (doc) {
+    ctx.status = 200;
+    ctx.body = {
+      code: 200,
+      info: "更新成功"
+    };
+  } else {
+
+  }
+};
 
 // 删除新闻
 const DeleteNews = async (ctx) => {
   let id = ctx.request.body.id;
   let _id = getId(id);
   // 当前页
-  let doc = await findNews(_id);
-  console.log(doc)
+  let doc = await deleteNews(_id);
+  if (doc) {
+    ctx.status = 200;
+    ctx.body = {
+      code: 200,
+      info: "删除成功"
+    };
+  } else {
+
+  }
 };
 
 module.exports = {
   FindNewsList,
-  DeleteNews
+  DeleteNews,
+  NewsDetail,
+  UpdateNews
 };

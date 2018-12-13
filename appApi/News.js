@@ -34,6 +34,10 @@ router.get('/insertNews',async(ctx)=>{
 router.post('/newsList', NewsController.FindNewsList);
 // 删除新闻
 router.post('/newsDelete', NewsController.DeleteNews);
+// 获取单个新闻
+router.post('/newsDetail', NewsController.NewsDetail);
+// 更新新闻
+router.post('/newsUpdate', NewsController.UpdateNews);
 // 新建新闻
 router.post('/createNews', async (ctx) => {
   let data = ctx.request.body;
