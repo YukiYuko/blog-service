@@ -20,13 +20,22 @@ const findNewsList = ({pageSize, currentPage, condition}) => {
   return new Promise((resolve, reject) => {
     // let sort = {'logindate':-1};        //排序（按登录时间倒序）
     let skipnum = (currentPage - 1) * pageSize;   //跳过数
-    News.find(condition).skip(skipnum).limit(pageSize).exec((err, doc) => {
-      if (err){
-        reject(err)
+    News.find().exec((_err, _doc) => {
+      if (_err){
+        reject(_err)
       } else {
-        resolve(doc);
+        News.find(condition).skip(skipnum).limit(pageSize).exec((err, doc) => {
+          if (err){
+            reject(err)
+          } else {
+            resolve({
+              total: _doc.length,
+              data: doc
+            });
+          }
+        })
       }
-    })
+    });
   });
 };
 // 查找单个新闻
