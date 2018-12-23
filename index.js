@@ -10,6 +10,7 @@ const port = 3002;
 let News = require('./appApi/News');
 let Users = require('./appApi/Users');
 let Upload = require('./appApi/Upload');
+let System = require('./appApi/System');
 let router = new Router();
 //引入connect
 const {connect} = require('./database/init.js');
@@ -20,6 +21,7 @@ const {connect} = require('./database/init.js');
   router.use('/news',News.routes());
   router.use('/users',Users.routes());
   router.use('/upload',Upload.routes());
+  router.use('/system',System.routes());
 
   app.use(koaBody({
     multipart: true,
