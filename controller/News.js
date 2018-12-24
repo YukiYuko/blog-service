@@ -10,6 +10,7 @@ const NewsSchema = new Schema({
   type:{type:Number},
   comments:{type:Number},
   tags:{type:Array},
+  desc:{type:String},
   content:{type:String},
 }, { timestamps: true });
 
