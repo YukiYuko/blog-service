@@ -11,6 +11,7 @@ let News = require('./appApi/News');
 let Users = require('./appApi/Users');
 let Upload = require('./appApi/Upload');
 let System = require('./appApi/System');
+let Comment = require('./appApi/Comment');
 let router = new Router();
 //引入connect
 const {connect} = require('./database/init.js');
@@ -22,6 +23,7 @@ const {connect} = require('./database/init.js');
   router.use('/users',Users.routes());
   router.use('/upload',Upload.routes());
   router.use('/system',System.routes());
+  router.use('/comment',Comment.routes());
 
   app.use(koaBody({
     multipart: true,

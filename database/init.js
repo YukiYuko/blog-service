@@ -52,6 +52,8 @@ exports.connect = ()=>{
   })
 };
 
+// let images = glob.sync(resolve(__dirname,'../public/touxiang','*.png'));
+// console.log("images", images);
 // exports.initSchemas = () =>{
 //   // __dirname 表示当前执行脚本所在的目录。
 //   // 同步获取匹配文件列表:

@@ -1,12 +1,12 @@
 const Router = require ('koa-router');
 let router = new Router();
 
-const SystemController = require('../controller/System');
-const prefix = "/tag";
-// 创建标签
-router.post(prefix +"/create", SystemController.createTag);
+const CommentController = require('../controller/Comment');
+const prefix = "/comment";
+// 发表留言
+router.post("/create", CommentController.createComment);
 // 所有标签
-router.get(prefix +"/list", SystemController.listTag);
+router.post("/list", CommentController.listComment);
 
 
 module.exports=router;
