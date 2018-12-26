@@ -41,7 +41,6 @@ const {connect} = require('./database/init.js');
 })();
 
 
-
 app.listen(port, () => {
     console.log(`服务启动成功，端口号： ${port}`);
 });
