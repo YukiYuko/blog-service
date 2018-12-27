@@ -5,25 +5,44 @@ const bodyParser = require('koa-bodyparser');
 const cors = require('koa2-cors');
 const koaBody = require('koa-body');
 const static = require('koa-static');
+const koajwt = require('koa-jwt');
 const path = require("path");
+const {TOKEN_ENCODE_STR} = require('./config/index');
 const port = 3002;
 let News = require('./appApi/News');
 let Users = require('./appApi/Users');
 let Upload = require('./appApi/Upload');
 let System = require('./appApi/System');
 let Comment = require('./appApi/Comment');
+let Other = require('./appApi/Other');
 let router = new Router();
 //引入connect
 const {connect} = require('./database/init.js');
 //立即执行函数
 ;(async () =>{
   await connect();
-  // initSchemas();
+  // 错误处理
+  app.use((ctx, next) => {
+    return next().catch((err) => {
+      if(err.status === 401){
+        ctx.status = 401;
+        ctx.body = 'Protected resource, use Authorization header to get access\n';
+      }else{
+        throw err;
+      }
+    })
+  });
+  app.use(koajwt({
+    secret: TOKEN_ENCODE_STR
+  }).unless({
+    path: [/\/users/, /\/other/]
+  }));
   router.use('/news',News.routes());
   router.use('/users',Users.routes());
   router.use('/upload',Upload.routes());
   router.use('/system',System.routes());
   router.use('/comment',Comment.routes());
+  router.use('/other',Other.routes());
 
   app.use(koaBody({
     multipart: true,

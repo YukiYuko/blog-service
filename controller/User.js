@@ -36,6 +36,7 @@ const objectIdToTimestamp = require('objectid-to-timestamp');
 const sha1 = require('sha1');
 //createToken
 const createToken = require('../token/createToken.js');
+const checkToken = require('../token/checkToken.js');
 //数据库的操作
 
 
@@ -106,7 +107,6 @@ const Login = async (ctx) => {
   //拿到账号和密码
   let userName = ctx.request.body.userName;
   let password = sha1(ctx.request.body.password);//解密
-  // let password = ctx.request.body.password;
   let doc = await findUser(userName);
   if (!doc) {
     console.log('检查到用户名不存在');
@@ -118,22 +118,14 @@ const Login = async (ctx) => {
   } else if (doc.password === password) {
     console.log('密码一致!');
     //生成一个新的token,并存到数据库
-    let token = createToken(userName);
+    let token = createToken(doc._id);
     doc.token = token;
-    await new Promise((resolve, reject) => {
-      doc.save((err) => {
-        if(err){
-          reject(err);
-        }
-        resolve();
-      })
-    });
+    await doc.save();
     ctx.status = 200;
     ctx.body = {
-      userName,
       token, //登录成功要创建一个新的token,应该存入数据库
-      create_time: doc.create_time,
-      code: 200
+      code: 200,
+      info: status[200]
     };
   } else {
     console.log('密码错误!');
@@ -147,34 +139,69 @@ const Login = async (ctx) => {
 
 //注册
 const Reg = async (ctx) => {
-  let user = new Users({
-    userName: ctx.request.body.userName,
-    password: sha1(ctx.request.body.password), //加密
-    token: createToken(this.userName), //创建token并存入数据库
-    // create_time: moment(objectIdToTimestamp(user._id)).format('YYYY-MM-DD HH:mm:ss'),//将objectid转换为用户创建时间
-  });
-  //将objectid转换为用户创建时间(可以不用)
-  user.create_time = moment(objectIdToTimestamp(user._id)).format('YYYY-MM-DD HH:mm:ss');
-  let doc = await findUser(user.userName);
-  if (doc) {
-    console.log('用户名已经存在');
-    ctx.status = 200;
-    ctx.body = {
-      success: false
-    };
-  } else {
-    await new Promise((resolve, reject) => {
-      user.save((err) => {
-        if (err) {
-          reject(err);
-        }
-        resolve();
-      });
+  try {
+    let {
+      userName = "",
+      password = "",
+      code = "",
+      code_token = ""
+    } = ctx.request.body;
+    if (!userName || !password) {
+      ctx.body = {
+        info: "注册失败，请填写完整表单！",
+        code: 401
+      }
+    }
+    // 验证码判断
+    let mark = await checkToken({token:code_token,code});
+    if(!mark){
+      ctx.body = {
+        code: 401,
+        info: '注册失败，验证码错误!'
+      };
+      return;
+    }
+
+    let token = createToken(userName);
+    let user = new Users({
+      userName: userName,
+      password: sha1(password), //加密
+      token: token
+      // create_time: moment(objectIdToTimestamp(user._id)).format('YYYY-MM-DD HH:mm:ss'),//将objectid转换为用户创建时间
     });
-    console.log('注册成功');
-    ctx.status = 200;
+    //将objectid转换为用户创建时间(可以不用)
+    user.create_time = moment(objectIdToTimestamp(user._id)).format('YYYY-MM-DD HH:mm:ss');
+    let doc = await findUser(user.userName);
+    if (doc) {
+      ctx.status = 200;
+      ctx.body = {
+        info: status[403000],
+        code: 403000
+      }
+    } else {
+      let res = await user.save();
+      if (res._id != null) {
+        console.log('注册成功');
+        ctx.body = {
+          info: status[200],
+          code: 200,
+          data: {
+            _id: res._id,
+            userName,
+            token,
+          }
+        }
+      } else {
+        ctx.body = {
+          code: 500,
+          info: "注册失败，服务器异常!"
+        }
+      }
+    }
+  } catch (e) {
     ctx.body = {
-      success: true
+      code: 500,
+      info: "注册失败，服务器异常!"
     }
   }
 };

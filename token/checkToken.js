@@ -1,18 +1,20 @@
 const jwt = require('jsonwebtoken');
-//检查token是否过期
+const {TOKEN_ENCODE_STR} = require('../config/index');
+const {Checkcode} = require('../controller/Other');
 
-module.exports = async ( ctx, next ) => {
+module.exports = async ({token, code}) => {
   //拿到token
-  const authorization = ctx.get('Authorization');
-  if (authorization === '') {
-    ctx.throw(401, 'no token detected in http headerAuthorization');
-  }
-  const token = authorization.split(' ')[1];
-  let tokenContent;
   try {
-    tokenContent = await jwt.verify(token, 'Yuki');//如果token过期或验证失败，将抛出错误
-  } catch (err) {
-    ctx.throw(401, 'invalid token');
+    // 验证码转大写
+    code = code.toUpperCase();
+    await jwt.verify(token, TOKEN_ENCODE_STR);
+    // 读数据库，删除验证码
+    let res = await Checkcode.findOneAndDelete({token,code});
+    if(res == null){
+      return false;
+    }
+  }catch (e) {
+    return false;
   }
-  await next();
+  return true;
 };
