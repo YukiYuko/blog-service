@@ -10,7 +10,7 @@ const mongoose = require('mongoose');   //引入Mongoose
 const Schema = mongoose.Schema;         //声明Schema
 
 // timestamps 字段自动生成创建时间和修改时间
-const UserSchema = new Schema({
+const AdminSchema = new Schema({
   userName:{type:String},
   nickname:{type:String},
   headImage:{type:String},
@@ -22,8 +22,10 @@ const UserSchema = new Schema({
   token:{type:String},
   create_time: Date
 }, { timestamps: true });
+const fs = require("fs");
+const path = require('path');
 
-const Users = mongoose.model('Users',UserSchema);
+const Admins = mongoose.model('Admin',AdminSchema);
 
 const {status} = require('../config/index');
 
@@ -37,24 +39,34 @@ const sha1 = require('sha1');
 //createToken
 const createToken = require('../token/createToken.js');
 const checkToken = require('../token/checkToken.js');
+
+
+
+const InsertUsers = async (ctx) => {
+  fs.readFile(path.resolve(__dirname, '../data_json/users.json'),'utf8',(err,data)=>{
+    let _data=JSON.parse(data);
+    let saveCount=0;
+    _data.map((value,index)=>{
+      console.log(value);
+      let newUsers= new Admins(value);
+      newUsers.save().then(()=>{
+        saveCount++;
+        console.log('成功'+saveCount)
+      }).catch(error=>{
+        console.log('失败：'+error)
+      })
+    })
+
+  });
+  ctx.body="开始导入数据"
+};
+
 //数据库的操作
 
-
-//根据token获取当前登录用户信息
-const findUser_token = (token) => {
-  return new Promise((resolve, reject) => {
-    Users.findOne({token}, (err, doc) => {
-      if (err) {
-        reject(err);
-      }
-      resolve(doc);
-    });
-  });
-};
 //根据用户名查找用户
-const findUser = (userName) => {
+const findAdmin = (userName) => {
   return new Promise((resolve, reject) => {
-    Users.findOne({userName}, (err, doc) => {
+    Admins.findOne({userName}, (err, doc) => {
       if (err) {
         reject(err);
       }
@@ -64,9 +76,9 @@ const findUser = (userName) => {
 };
 
 //找到所有用户
-const findAllUsers = () => {
+const findAllAdmins = () => {
   return new Promise((resolve, reject) => {
-    Users.find({}, (err, doc) => {
+    Admins.find({}, (err, doc) => {
       if (err) {
         reject(err);
       }
@@ -76,9 +88,9 @@ const findAllUsers = () => {
 };
 
 //删除某个用户
-const delUser = function (id) {
+const delAdmin = function (id) {
   return new Promise((resolve, reject) => {
-    Users.findOneAndRemove({_id: id}, err => {
+    Admins.findOneAndRemove({_id: id}, err => {
       if (err) {
         reject(err);
       }
@@ -88,10 +100,10 @@ const delUser = function (id) {
   });
 };
 //修改某个用户
-const updateUser = function (id, data) {
+const updateAdmin = function (id, data) {
   // data 新的用户的值
   return new Promise((resolve, reject) => {
-    Users.updateOne({_id: id}, data, err => {
+    Admins.updateOne({_id: id}, data, err => {
       if (err) {
         reject(err);
       }
@@ -106,8 +118,9 @@ const updateUser = function (id, data) {
 const Login = async (ctx) => {
   //拿到账号和密码
   let userName = ctx.request.body.userName;
-  let password = sha1(ctx.request.body.password);//解密
-  let doc = await findUser(userName);
+  // let password = sha1(ctx.request.body.password);//解密
+  let password = ctx.request.body.password;//解密
+  let doc = await findAdmin(userName);
   if (!doc) {
     console.log('检查到用户名不存在');
     ctx.status = 200;
@@ -121,7 +134,6 @@ const Login = async (ctx) => {
     let token = createToken(doc._id);
     doc.token = token;
     await doc.save();
-    // ctx.session.token = token;
     ctx.status = 200;
     ctx.body = {
       code: 200,
@@ -166,15 +178,15 @@ const Reg = async (ctx) => {
     }
 
     let token = createToken(userName);
-    let user = new Users({
+    let admin = new Admins({
       userName: userName,
       password: sha1(password), //加密
       token: token
       // create_time: moment(objectIdToTimestamp(user._id)).format('YYYY-MM-DD HH:mm:ss'),//将objectid转换为用户创建时间
     });
     //将objectid转换为用户创建时间(可以不用)
-    user.create_time = moment(objectIdToTimestamp(user._id)).format('YYYY-MM-DD HH:mm:ss');
-    let doc = await findUser(user.userName);
+    admin.create_time = moment(objectIdToTimestamp(admin._id)).format('YYYY-MM-DD HH:mm:ss');
+    let doc = await findUser(admin.userName);
     if (doc) {
       ctx.status = 200;
       ctx.body = {
@@ -182,7 +194,7 @@ const Reg = async (ctx) => {
         code: 403000
       }
     } else {
-      let res = await user.save();
+      let res = await admin.save();
       if (res._id != null) {
         console.log('注册成功');
         ctx.body = {
@@ -210,9 +222,9 @@ const Reg = async (ctx) => {
 };
 
 //获得所有用户信息
-const GetAllUsers = async (ctx) => {
+const GetAllAdmins = async (ctx) => {
   //查询所有用户信息
-  let doc = await findAllUsers();
+  let doc = await findAllAdmins();
   ctx.status = 200;
   ctx.body = {
     succsess: '成功',
@@ -231,7 +243,25 @@ const GetUserInfo =  async (ctx, next) => {
     return;
   }
   try {
-    let res = await Users.findOne({_id},{userName:true,_id: true});
+    let res = await Admins.findOne({_id},{userName:true,_id: true});
+    ctx.body = {
+      code: 200,
+      info: '查询成功！',
+      data: res
+    }
+  }catch(e){
+    console.log(e);
+    ctx.body = {
+      code: 500,
+      info: '查询失败，服务器异常，请稍后再试!'
+    }
+  }
+};
+//通过token 获取用户信息
+const GetUserInfo_token =  async (ctx, next) => {
+  let token = ctx.query.token;
+  try {
+    let res = await Admins.findOne({token});
     ctx.body = {
       code: 200,
       info: '查询成功！',
@@ -247,10 +277,10 @@ const GetUserInfo =  async (ctx, next) => {
 };
 
 //删除某个用户
-const DelUser = async (ctx) => {
+const DelAdmin = async (ctx) => {
   //拿到要删除的用户id
   let id = ctx.request.body.id;
-  await delUser(id);
+  await delAdmin(id);
   ctx.status = 200;
   ctx.body = {
     success: '删除成功'
@@ -258,9 +288,11 @@ const DelUser = async (ctx) => {
 };
 
 module.exports = {
+  InsertUsers,
   Login,
   Reg,
-  GetAllUsers,
-  DelUser,
-  GetUserInfo
+  GetAllAdmins,
+  DelAdmin,
+  GetUserInfo,
+  GetUserInfo_token
 };

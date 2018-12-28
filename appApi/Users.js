@@ -35,6 +35,6 @@ router.post("/login", UserController.Login);
 // 注册
 router.post("/register", UserController.Reg);
 // 获取用户信息
-router.post("/userInfo", UserController.GetUser_token);
+router.get("/userInfo", UserController.GetUserInfo);
 
 module.exports=router;

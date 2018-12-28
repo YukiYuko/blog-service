@@ -16,13 +16,11 @@ module.exports = {
   async checkcode(ctx, next) {
     try {
       let {code, img} = makeCapcha();
-      let token = createToken(code);
-      await new Checkcode({token, code}).save();
+      ctx.session.code = code;
       ctx.body = {
         code: 200,
         info: '获取验证码成功！',
         data: {
-          token,
           img: "data:image/bmp;base64," + img.getFileData().toString('base64')
         }
       }

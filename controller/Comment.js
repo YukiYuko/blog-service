@@ -16,7 +16,8 @@ const CommentsSchema = new Schema({
   headImage:{type:String},
   pid:{type: String},
   hasChildren:{type: Boolean},
-  answer:{type: Object}
+  answer:{type: Object},
+  floor:{type: Number}
 }, { timestamps: true });
 const GuestSchema = new Schema({
   name:{type:String},
@@ -135,7 +136,12 @@ const getUrl = (ctx) => {
 };
 // 发表留言
 const createComment = async (ctx) => {
-  let Comment = new Comments({
+  let lastComment = await Comments.find({
+    newsId: ctx.request.body.newsId,
+    pid: "0"
+  }).sort({'_id': -1}).limit(1);
+  let lastfloor = lastComment.length ? lastComment[0].floor + 1 : 1;
+  let data = {
     name: ctx.request.body.name,
     desc: ctx.request.body.desc,
     mail: ctx.request.body.mail,
@@ -147,7 +153,12 @@ const createComment = async (ctx) => {
     headImage: getUrl(ctx),
     pid: ctx.request.body.pid || 0,
     answer: ctx.request.body.answer
-  });
+  };
+  // 只有父评论才有楼层
+  if (!ctx.request.body.pid) {
+    data = {...data, floor: lastfloor}
+  }
+  let Comment = new Comments(data);
   try {
     await new Promise((resolve, reject) => {
       Comment.save((err) => {

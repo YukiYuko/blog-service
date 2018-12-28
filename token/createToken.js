@@ -8,5 +8,5 @@ const {TOKEN_ENCODE_STR} = require('../config/index');
 * 第三个是options，可以设置 token 的过期时间。
 * */
 module.exports = (user_id) => {
-  return jwt.sign({user_id: user_id}, TOKEN_ENCODE_STR, {expiresIn: '1h'});
+  return jwt.sign({user_id: user_id}, TOKEN_ENCODE_STR, {expiresIn: '24h'});
 };
