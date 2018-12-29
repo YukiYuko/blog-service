@@ -10,7 +10,7 @@ const CommentsSchema = new Schema({
   desc:{type:String},
   mail:{type:String},
   qq:{type:Number},
-  newsId:{type:String},
+  newsId:{type: Schema.Types.ObjectId},
   userId:{type:String},
   reply:{type: Array},
   headImage:{type:String},
@@ -30,49 +30,6 @@ const GuestSchema = new Schema({
 const Comments = mongoose.model('Comments', CommentsSchema);
 const Guests = mongoose.model('Guest',GuestSchema);
 
-
-// 查询当前文章下的留言
-// const findALLComment = ({pageSize, currentPage, condition}) => {
-//   return new Promise((resolve, reject) => {
-//
-//     let skipNum = (currentPage - 1) * pageSize;   //跳过数
-//     Comments.countDocuments(condition, (err, count) => {
-//       Comments.find(condition).skip(skipNum).limit(pageSize).sort({'_id': -1}).exec((err, doc) => {
-//         if (err) {
-//           reject(err);
-//         } else {
-//
-//           let taskList=[];
-//           doc.forEach((item) => {
-//             let task=new Promise((resolve,reject)=>{
-//               let pid = item._id;
-//               Comments.find({'pid': pid}).exec((_err, _doc) => {
-//                 if (_err) {
-//                   reject(_err)
-//                 }else {
-//                   item.reply = _doc;
-//                   resolve(item);
-//                   console.log("item", item)
-//                 }
-//               });
-//             });
-//             taskList.push(task);
-//           });
-//
-//           Promise.all(taskList).then(()=>{
-//             resolve({
-//               data: doc,
-//               total: count
-//             });
-//           })
-//         }
-//
-//       });
-//
-//     });
-//
-//   });
-// };
 const findALLComment = async ({pageSize, currentPage, condition}) => {
   let skipNum = (currentPage - 1) * pageSize;   //跳过数
   let count = await Comments.countDocuments(condition);
@@ -88,7 +45,6 @@ const findALLComment = async ({pageSize, currentPage, condition}) => {
           }else {
             item.reply = _doc;
             resolve(item);
-            console.log("item", item)
           }
         });
       });
@@ -147,7 +103,7 @@ const createComment = async (ctx) => {
     mail: ctx.request.body.mail,
     qq: ctx.request.body.qq,
     url: ctx.request.body.url,
-    newsId: ctx.request.body.newsId,
+    newsId: getId(ctx.request.body.newsId),
     userId: ctx.request.body.userId,
     reply: ctx.request.body.reply,
     headImage: getUrl(ctx),
@@ -221,7 +177,7 @@ const UpdateComment = async (ctx) => {
 };
 // 查询当前文章下的留言
 const listComment = async (ctx) => {
-  let newsId = ctx.request.body.newsId;
+  let newsId = getId(ctx.request.body.newsId);
   // 每页多少条
   let pageSize = ctx.request.body.limit || 5;
   // 当前页

@@ -2,6 +2,7 @@ const {status} = require('../config/index');
 const mongoose = require('mongoose');   //引入Mongoose
 const Schema = mongoose.Schema;         //声明Schema
 const TagsSchema = new Schema({
+  newsId: {type: Schema.Types.ObjectId, ref: 'News'},
   name:{type:String},
 }, { timestamps: true });
 const Tags = mongoose.model('Tags', TagsSchema);
