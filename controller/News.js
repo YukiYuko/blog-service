@@ -44,11 +44,13 @@ const deleteNews = (id) => {
 // 获取新闻列表
 const FindNewsList = async (ctx) => {
   // 每页多少条
-  let pageSize = ctx.request.body.limit || 10;
+  let pageSize = ctx.request.body.limit || 5;
   // 当前页
   let currentPage = ctx.request.body.page || 1;
   // 查询条件
-  let condition = ctx.request.body.condition || {};
+  let condition = ctx.request.body.condition || {sort: "_id"};
+  // 根据什么排序
+  let sort = condition.sort;
   let skipnum = (currentPage - 1) * pageSize;   //跳过数
   let count = await News.countDocuments({});
   let doc = await News.aggregate([
@@ -59,8 +61,13 @@ const FindNewsList = async (ctx) => {
         foreignField: "newsId",
         as: "comments"
       }
+    },
+    {
+      $match: {
+
+      }
     }
-  ]).skip(skipnum).limit(pageSize);
+  ]).sort({[sort]: -1}).skip(skipnum).limit(pageSize);
   if (doc) {
     ctx.status = 200;
     ctx.body = {

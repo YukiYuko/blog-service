@@ -5,6 +5,7 @@ let router = new Router();
 const mongoose = require('mongoose');
 const fs = require('fs');
 const NewsController = require('../controller/News');
+const {base64_decode} = require("../lib/index")
 
 
 //获取所有数据
@@ -41,6 +42,13 @@ router.post('/newsUpdate', NewsController.UpdateNews);
 // 新建新闻
 router.post('/createNews', async (ctx) => {
   let data = ctx.request.body;
+  let base64Data = data.image.replace(/^data:image\/\w+;base64,/, "");
+  let imgName = `${Math.floor(Math.random()*10)}.${+new Date()}.jpg`;
+  let imgUrl = `public/upload/${imgName}`;
+  base64_decode(base64Data, imgUrl);
+
+  data.image = 'http://' + ctx.headers.host + '/upload/' + imgName;
+
   const News = mongoose.model('News');
   await new News(data).save().then((result) => {
     ctx.body={code:200,info:'成功', data: result}
