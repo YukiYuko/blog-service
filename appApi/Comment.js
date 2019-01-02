@@ -7,8 +7,8 @@ const prefix = "/comment";
 router.post("/create", CommentController.createComment);
 // 所有留言
 router.post("/list", CommentController.listComment);
-// 修改留言
-router.post("/update", CommentController.UpdateComment);
+// 最新留言
+router.post("/latest", CommentController.latestComent);
 
 
 module.exports=router;

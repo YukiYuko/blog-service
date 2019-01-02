@@ -88,15 +88,12 @@ const NewsDetail = async (ctx) => {
   let _id = getId(id);
   // 当前页
   let doc = await News.findOne({_id: _id});
-  if (!ctx.session.record){
-    if (!doc.heat) {
-      doc.heat = 1;
-    } else {
-      doc.heat++;
-    }
-    await doc.save();
-    ctx.session.record = new Date().getTime();
+  if (!doc.heat) {
+    doc.heat = 1;
+  } else {
+    doc.heat++;
   }
+  await doc.save();
   if (doc) {
     ctx.status = 200;
     ctx.body = {

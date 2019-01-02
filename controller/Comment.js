@@ -10,7 +10,7 @@ const CommentsSchema = new Schema({
   desc:{type:String},
   mail:{type:String},
   qq:{type:Number},
-  newsId:{type: Schema.Types.ObjectId},
+  newsId:{type: Schema.Types.ObjectId, ref: "News"},
   userId:{type:String},
   reply:{type: Array},
   headImage:{type:String},
@@ -30,6 +30,7 @@ const GuestSchema = new Schema({
 const Comments = mongoose.model('Comments', CommentsSchema);
 const Guests = mongoose.model('Guest',GuestSchema);
 
+// 查询当前文章下的评论
 const findALLComment = async ({pageSize, currentPage, condition}) => {
   let skipNum = (currentPage - 1) * pageSize;   //跳过数
   let count = await Comments.countDocuments(condition);
@@ -58,30 +59,28 @@ const findALLComment = async ({pageSize, currentPage, condition}) => {
     })
   })
 };
-
-// 查询评论
-const findComment = (id) => {
-  return new Promise((resolve, reject) => {
-    Comments.findOne({_id: id}, (err,doc) => {
-      if (err){
-        reject(err)
-      } else {
-        resolve(doc);
-      }
-    })
-  })
-};
-
-// 查询该昵称是否已被占用
-const findGuest = (name) => {
-  return new Promise((resolve, reject) => {
-    Guests.findOne({name}, (err, doc) => {
-      if (err) {
-        reject(err)
-      }
-      resolve(doc);
-    })
-  })
+// 最新评论
+const latestComent = async (ctx) => {
+  // 每页多少条
+  let pageSize = ctx.request.body.limit || 5;
+  let condition = {
+    pid: "0"
+  };
+  let doc = await Comments.find(condition).populate("newsId", "title").limit(pageSize).sort({"_id": -1});
+  if (doc) {
+    ctx.status = 200;
+    ctx.body = {
+      code: 200,
+      info: "请求成功",
+      data: doc
+    };
+  } else {
+    ctx.status = 200;
+    ctx.body = {
+      code: 300,
+      info: status[300]
+    };
+  }
 };
 const getUrl = (ctx) => {
   let images = glob.sync(resolve(__dirname,'../public/touxiang','*.png'));
@@ -134,47 +133,6 @@ const createComment = async (ctx) => {
     console.log("e",e)
   }
 };
-// 更新评论
-const UpdateComment = async (ctx) => {
-  let id = ctx.request.body.id;
-  let _id = getId(id);
-  let Comment = new Comments({
-    name: ctx.request.body.name,
-    desc: ctx.request.body.desc,
-    mail: ctx.request.body.mail,
-    qq: ctx.request.body.qq,
-    url: ctx.request.body.url,
-    newsId: ctx.request.body.newsId,
-    userId: ctx.request.body.userId,
-    reply: ctx.request.body.reply,
-    headImage: getUrl(ctx)
-  });
-  // 当前页
-  let doc = await findComment(_id);
-  if (!doc) {
-    ctx.status = 200;
-    ctx.body = {
-      info: status[300],
-      code: 300
-    }
-  } else {
-    doc.reply.push(Comment);
-    await new Promise((resolve, reject) => {
-      doc.save((err) => {
-        if(err){
-          reject(err);
-        }
-        resolve();
-      })
-    });
-    ctx.status = 200;
-    ctx.body = {
-      code: 200,
-      info: status[200],
-      data: Comment
-    };
-  }
-};
 // 查询当前文章下的留言
 const listComment = async (ctx) => {
   let newsId = getId(ctx.request.body.newsId);
@@ -212,5 +170,5 @@ const listComment = async (ctx) => {
 module.exports = {
   createComment,
   listComment,
-  UpdateComment
+  latestComent
 };
