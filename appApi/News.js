@@ -39,6 +39,8 @@ router.post('/newsDelete', NewsController.DeleteNews);
 router.post('/newsDetail', NewsController.NewsDetail);
 // 更新新闻
 router.post('/newsUpdate', NewsController.UpdateNews);
+// 搜索
+router.post('/search', NewsController.SearchList);
 // 新建新闻
 router.post('/createNews', async (ctx) => {
   let data = ctx.request.body;
@@ -51,10 +53,10 @@ router.post('/createNews', async (ctx) => {
 
   const News = mongoose.model('News');
   await new News(data).save().then((result) => {
-    ctx.body={code:200,info:'成功', data: result}
+    ctx.body={code:200,info:'成功', data: result};
     console.log("result",result)
   }).catch((error) => {
-    ctx.body={code:500,info:'失败', data: error}
+    ctx.body={code:500,info:'失败', data: error};
     console.log("error", error)
   })
 });

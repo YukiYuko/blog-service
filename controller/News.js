@@ -6,7 +6,7 @@ const {getId, getUserIp} = require('../lib/index');
 const NewsSchema = new Schema({
   title:{type:String},
   image:{type:String},
-  type:{type:Number},
+  newsType:{type:String},
   tags:{type:Array},
   desc:{type:String},
   content:{type:String},
@@ -48,11 +48,11 @@ const FindNewsList = async (ctx) => {
   // 当前页
   let currentPage = ctx.request.body.page || 1;
   // 查询条件
-  let condition = ctx.request.body.condition || {sort: "_id"};
+  let condition = ctx.request.body.condition || {};
   // 根据什么排序
-  let sort = condition.sort;
+  let sort = ctx.request.body.sort || "_id";
   let skipnum = (currentPage - 1) * pageSize;   //跳过数
-  let count = await News.countDocuments({});
+  let count = await News.countDocuments(condition);
   let doc = await News.aggregate([
     {
       $lookup: {
@@ -63,11 +63,52 @@ const FindNewsList = async (ctx) => {
       }
     },
     {
-      $match: {
-
-      }
+      $match: condition
     }
   ]).sort({[sort]: -1}).skip(skipnum).limit(pageSize);
+  if (doc) {
+    ctx.status = 200;
+    ctx.body = {
+      code: 200,
+      info: "请求成功",
+      data: {
+        total: count,
+        data: doc
+      }
+    };
+  } else {
+
+  }
+};
+// 搜索
+const SearchList = async (ctx) => {
+  // 每页多少条
+  let pageSize = ctx.request.body.limit || 5;
+  // 当前页
+  let currentPage = ctx.request.body.page || 1;
+  // 查询条件
+  let newsType = ctx.request.body.newsType || "";
+  // 关键字
+  let keyword = ctx.request.body.keyword || "";
+  // 根据什么排序
+  let sort = ctx.request.body.sort || "_id";
+  let skipnum = (currentPage - 1) * pageSize;   //跳过数
+  const reg = new RegExp(keyword, 'i');
+  let params = {
+    $or: [
+      {'title': {'$regex': reg}},
+      {'desc': {'$regex': reg}},
+    ],
+  };
+  if (newsType) {
+    params = {...params, newsType}
+  }
+  let count = await News.find(
+    params
+  ).countDocuments();
+  let doc = await News.find(
+    params
+  ).sort({[sort]: -1}).skip(skipnum).limit(pageSize);
   if (doc) {
     ctx.status = 200;
     ctx.body = {
@@ -143,5 +184,6 @@ module.exports = {
   FindNewsList,
   DeleteNews,
   NewsDetail,
-  UpdateNews
+  UpdateNews,
+  SearchList
 };
