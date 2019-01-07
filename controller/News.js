@@ -90,18 +90,31 @@ const SearchList = async (ctx) => {
   let newsType = ctx.request.body.newsType || "";
   // 关键字
   let keyword = ctx.request.body.keyword || "";
+  // 标签
+  let tag = ctx.request.body.tag || "";
   // 根据什么排序
   let sort = ctx.request.body.sort || "_id";
   let skipnum = (currentPage - 1) * pageSize;   //跳过数
   const reg = new RegExp(keyword, 'i');
-  let params = {
-    $or: [
-      {'title': {'$regex': reg}},
-      {'desc': {'$regex': reg}},
-    ],
-  };
+  let params = {};
+  if (keyword) {
+    params = {
+      ...params,
+      $or: [
+        {'title': {'$regex': reg}},
+        {'desc': {'$regex': reg}},
+      ]
+    }
+  }
   if (newsType) {
     params = {...params, newsType}
+  }
+  if (tag) {
+    params = {
+      tags: {
+        $elemMatch: {$eq: tag}
+      }
+    }
   }
   let count = await News.find(
     params
