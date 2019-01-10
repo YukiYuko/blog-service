@@ -36,5 +36,8 @@ router.post("/login", UserController.Login);
 router.post("/register", UserController.Reg);
 // 获取用户信息
 router.get("/userInfo", UserController.GetUserInfo);
-
+// 修改用户
+router.post("/update", UserController.UpdateUser);
+// 修改密码
+router.post("/updatePassword", UserController.UpdatePassword);
 module.exports=router;

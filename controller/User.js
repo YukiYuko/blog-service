@@ -14,6 +14,10 @@ const UserSchema = new Schema({
   userName:{type:String},
   nickname:{type:String},
   headImage:{type:String},
+  job:{type:String},
+  company:{type:String},
+  introduce:{type:String},
+  homePage:{type:String},
   sex:{type:Number},
   age:{type:Number},
   email:{type:String},
@@ -37,6 +41,8 @@ const sha1 = require('sha1');
 //createToken
 const createToken = require('../token/createToken.js');
 const checkToken = require('../token/checkToken.js');
+//导入Lib
+const {getUrl} = require('../lib/index');
 //数据库的操作
 
 
@@ -51,63 +57,14 @@ const findUser_token = (token) => {
     });
   });
 };
-//根据用户名查找用户
-const findUser = (userName) => {
-  return new Promise((resolve, reject) => {
-    Users.findOne({userName}, (err, doc) => {
-      if (err) {
-        reject(err);
-      }
-      resolve(doc);
-    });
-  });
-};
-
-//找到所有用户
-const findAllUsers = () => {
-  return new Promise((resolve, reject) => {
-    Users.find({}, (err, doc) => {
-      if (err) {
-        reject(err);
-      }
-      resolve(doc);
-    });
-  });
-};
-
-//删除某个用户
-const delUser = function (id) {
-  return new Promise((resolve, reject) => {
-    Users.findOneAndRemove({_id: id}, err => {
-      if (err) {
-        reject(err);
-      }
-      console.log('删除用户成功');
-      resolve();
-    });
-  });
-};
-//修改某个用户
-const updateUser = function (id, data) {
-  // data 新的用户的值
-  return new Promise((resolve, reject) => {
-    Users.updateOne({_id: id}, data, err => {
-      if (err) {
-        reject(err);
-      }
-      console.log('更新用户成功');
-      resolve();
-    })
-  })
-};
 
 //登录
 
 const Login = async (ctx) => {
   //拿到账号和密码
   let userName = ctx.request.body.userName;
-  let password = sha1(ctx.request.body.password);//解密
-  let doc = await findUser(userName);
+  let password = sha1(ctx.request.body.password);//加密
+  let doc = await Users.findOne({userName: userName});
   if (!doc) {
     console.log('检查到用户名不存在');
     ctx.status = 200;
@@ -121,7 +78,6 @@ const Login = async (ctx) => {
     let token = createToken(doc._id);
     doc.token = token;
     await doc.save();
-    // ctx.session.token = token;
     ctx.status = 200;
     ctx.body = {
       code: 200,
@@ -169,12 +125,13 @@ const Reg = async (ctx) => {
     let user = new Users({
       userName: userName,
       password: sha1(password), //加密
-      token: token
+      token: token,
+      headImage: getUrl(ctx)
       // create_time: moment(objectIdToTimestamp(user._id)).format('YYYY-MM-DD HH:mm:ss'),//将objectid转换为用户创建时间
     });
     //将objectid转换为用户创建时间(可以不用)
     user.create_time = moment(objectIdToTimestamp(user._id)).format('YYYY-MM-DD HH:mm:ss');
-    let doc = await findUser(user.userName);
+    let doc = await Users.findOne({userName: user.userName});
     if (doc) {
       ctx.status = 200;
       ctx.body = {
@@ -212,7 +169,7 @@ const Reg = async (ctx) => {
 //获得所有用户信息
 const GetAllUsers = async (ctx) => {
   //查询所有用户信息
-  let doc = await findAllUsers();
+  let doc = await Users.find({});
   ctx.status = 200;
   ctx.body = {
     succsess: '成功',
@@ -231,7 +188,11 @@ const GetUserInfo =  async (ctx, next) => {
     return;
   }
   try {
-    let res = await Users.findOne({_id},{userName:true,_id: true});
+    let res = await Users.findOne({_id},
+      {
+        password: false
+      }
+    );
     ctx.body = {
       code: 200,
       info: '查询成功！',
@@ -250,11 +211,73 @@ const GetUserInfo =  async (ctx, next) => {
 const DelUser = async (ctx) => {
   //拿到要删除的用户id
   let id = ctx.request.body.id;
-  await delUser(id);
+  await Users.findOneAndRemove({_id: id});
   ctx.status = 200;
   ctx.body = {
-    success: '删除成功'
+    info: '删除成功',
+    code: 200
   };
+};
+
+//修改用户信息
+const UpdateUser = async (ctx) => {
+  let id = ctx.request.body._id;
+  let data = ctx.request.body.data;
+  await Users.updateOne({_id: id}, data);
+  ctx.status = 200;
+  ctx.body = {
+    info: '修改成功',
+    code: 200
+  };
+};
+//修改密码
+const UpdatePassword = async (ctx) => {
+  let {
+    _id,
+    old_password,
+    new_password,
+    sure_password
+  } = ctx.request.body;
+  let doc = await Users.findOne({_id});
+  console.log(sha1(old_password))
+  console.log(doc)
+  if (!doc) {
+    ctx.status = 200;
+    ctx.body = {
+      info: status[300],
+      code: 300,
+    };
+  } else {
+    if (!old_password || !new_password || !sure_password) {
+      ctx.status = 200;
+      ctx.body = {
+        info: "请输入完整的信息",
+        code: 401,
+      };
+    } else {
+      if (sha1(old_password) !== doc.password) {
+        ctx.status = 200;
+        ctx.body = {
+          info: "原密码输入错误！",
+          code: 401,
+        };
+      } else if (new_password !== sure_password) {
+        ctx.status = 200;
+        ctx.body = {
+          info: "两次输入的密码不一致！",
+          code: 401,
+        };
+      } else {
+        doc.password = sha1(new_password);
+        await doc.save();
+        ctx.status = 200;
+        ctx.body = {
+          info: "修改成功！请重新登录",
+          code: 200,
+        };
+      }
+    }
+  }
 };
 
 module.exports = {
@@ -262,5 +285,7 @@ module.exports = {
   Reg,
   GetAllUsers,
   DelUser,
-  GetUserInfo
+  GetUserInfo,
+  UpdateUser,
+  UpdatePassword
 };
