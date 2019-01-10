@@ -6,7 +6,6 @@ const uploadSingle = async (ctx, next) => {
   * */
   // 获取文件
   const file = ctx.request.files.file;
-  console.log(file)
   // 创建可读流
   const reader = fs.createReadStream(file.path);
   const name = Math.random().toString();

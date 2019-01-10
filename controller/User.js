@@ -43,6 +43,7 @@ const createToken = require('../token/createToken.js');
 const checkToken = require('../token/checkToken.js');
 //导入Lib
 const {getUrl} = require('../lib/index');
+const {base64_decode} = require("../lib/index")
 //数据库的操作
 
 
@@ -223,6 +224,13 @@ const DelUser = async (ctx) => {
 const UpdateUser = async (ctx) => {
   let id = ctx.request.body._id;
   let data = ctx.request.body.data;
+  if (data.headImage) {
+    let base64Data = data.headImage.replace(/^data:image\/\w+;base64,/, "");
+    let imgName = `${Math.floor(Math.random()*10)}.${+new Date()}.jpg`;
+    let imgUrl = `public/upload/${imgName}`;
+    base64_decode(base64Data, imgUrl);
+    data.headImage = 'http://' + ctx.headers.host + '/upload/' + imgName;
+  }
   await Users.updateOne({_id: id}, data);
   ctx.status = 200;
   ctx.body = {
@@ -239,8 +247,6 @@ const UpdatePassword = async (ctx) => {
     sure_password
   } = ctx.request.body;
   let doc = await Users.findOne({_id});
-  console.log(sha1(old_password))
-  console.log(doc)
   if (!doc) {
     ctx.status = 200;
     ctx.body = {
