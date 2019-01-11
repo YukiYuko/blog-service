@@ -44,21 +44,8 @@ const createToken = require('../token/createToken.js');
 const checkToken = require('../token/checkToken.js');
 //导入Lib
 const {getUrl} = require('../lib/index');
-const {base64_decode} = require("../lib/index")
+const {base64_decode} = require("../lib/index");
 //数据库的操作
-
-
-//根据token获取当前登录用户信息
-const findUser_token = (token) => {
-  return new Promise((resolve, reject) => {
-    Users.findOne({token}, (err, doc) => {
-      if (err) {
-        reject(err);
-      }
-      resolve(doc);
-    });
-  });
-};
 
 //登录
 

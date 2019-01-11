@@ -11,10 +11,20 @@ const NewsSchema = new Schema({
   desc:{type:String},
   content:{type:String},
   heat:{type: Number},
-  isHot:{type: Boolean}
+  isHot:{type: Boolean},
+  likes:{type:Number}
 }, { timestamps: true });
 
+// 用户收藏表
+const UserLikeSchema = new Schema({
+  uid: {type:String},
+  aid: {type:String}
+});
+UserLikeSchema.index({uid: 1, aid: 1});
+
+const UserLikes = mongoose.model("UserLikes", UserLikeSchema);
 const News = mongoose.model('News',NewsSchema);
+
 // 更新单个新闻
 const updateNews = (id, data) => {
   return new Promise((resolve, reject) => {
@@ -175,7 +185,6 @@ const UpdateNews = async (ctx) => {
 
   }
 };
-
 // 删除新闻
 const DeleteNews = async (ctx) => {
   let id = ctx.request.body.id;
@@ -192,6 +201,11 @@ const DeleteNews = async (ctx) => {
 
   }
 };
+// 点赞喜欢
+const LikeNews = async (ctx) => {
+
+};
+
 
 module.exports = {
   FindNewsList,
