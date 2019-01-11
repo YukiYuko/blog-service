@@ -23,6 +23,7 @@ const UserSchema = new Schema({
   email:{type:String},
   password:{type:String},
   phone:{type:Number},
+  qq:{type:String},
   token:{type:String},
   create_time: Date
 }, { timestamps: true });

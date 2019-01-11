@@ -105,7 +105,7 @@ const createComment = async (ctx) => {
     newsId: getId(ctx.request.body.newsId),
     userId: ctx.request.body.userId,
     reply: ctx.request.body.reply,
-    headImage: getUrl(ctx),
+    headImage: ctx.request.body.headImage || getUrl(ctx),
     pid: ctx.request.body.pid || 0,
     answer: ctx.request.body.answer
   };
