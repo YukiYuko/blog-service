@@ -203,7 +203,16 @@ const DeleteNews = async (ctx) => {
 };
 // 点赞喜欢
 const LikeNews = async (ctx) => {
-
+  let {
+    uid,
+    aid
+  } = {...ctx.request.body};
+  console.log(uid, aid);
+  ctx.status = 200;
+  ctx.body = {
+    code: 200,
+    info: "收藏成功"
+  };
 };
 
 
@@ -212,5 +221,6 @@ module.exports = {
   DeleteNews,
   NewsDetail,
   UpdateNews,
-  SearchList
+  SearchList,
+  LikeNews
 };

@@ -41,6 +41,8 @@ router.post('/newsDetail', NewsController.NewsDetail);
 router.post('/newsUpdate', NewsController.UpdateNews);
 // 搜索
 router.post('/search', NewsController.SearchList);
+// 喜欢
+router.post('/like', NewsController.LikeNews);
 // 新建新闻
 router.post('/createNews', async (ctx) => {
   let data = ctx.request.body;
