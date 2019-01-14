@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');  //引入Mongoose
 const Schema = mongoose.Schema;         //声明Schema
-const {getId, getUserIp} = require('../lib/index');
+const {getId, getUserIp, ret} = require('../lib/index');
 
 // timestamps 字段自动生成创建时间和修改时间
 const NewsSchema = new Schema({
@@ -12,7 +12,8 @@ const NewsSchema = new Schema({
   content:{type:String},
   heat:{type: Number},
   isHot:{type: Boolean},
-  likes:{type:Number}
+  likes:{type:Number},
+  isLike:{type:Boolean}
 }, { timestamps: true });
 
 // 用户收藏表
@@ -20,7 +21,7 @@ const UserLikeSchema = new Schema({
   uid: {type:String},
   aid: {type:String}
 });
-UserLikeSchema.index({uid: 1, aid: 1});
+UserLikeSchema.index({uid: 1, aid: 1}, {unique:true});
 
 const UserLikes = mongoose.model("UserLikes", UserLikeSchema);
 const News = mongoose.model('News',NewsSchema);
@@ -148,10 +149,11 @@ const SearchList = async (ctx) => {
 };
 // 获取新闻
 const NewsDetail = async (ctx) => {
-  let id = ctx.request.body.id;
+  let {id,uid} = ctx.request.body;
   let _id = getId(id);
   // 当前页
   let doc = await News.findOne({_id: _id});
+  let isLike = await UserLikes.findOne({uid, aid: id});
   if (!doc.heat) {
     doc.heat = 1;
   } else {
@@ -159,6 +161,7 @@ const NewsDetail = async (ctx) => {
   }
   await doc.save();
   if (doc) {
+    isLike && (doc.isLike = true);
     ctx.status = 200;
     ctx.body = {
       code: 200,
@@ -203,16 +206,33 @@ const DeleteNews = async (ctx) => {
 };
 // 点赞喜欢
 const LikeNews = async (ctx) => {
-  let {
-    uid,
-    aid
-  } = {...ctx.request.body};
-  console.log(uid, aid);
-  ctx.status = 200;
-  ctx.body = {
-    code: 200,
-    info: "收藏成功"
-  };
+  try {
+    let {
+      uid,
+      aid,
+      type
+    } = {...ctx.request.body};
+    let doc = await News.findOne({_id: getId(aid)});
+    let likesNum = doc.likes || 0;
+    if (type === "like") {
+      let likes = new UserLikes({
+        uid,
+        aid
+      });
+      await likes.save();
+      await News.findOneAndUpdate({_id: getId(aid)}, {likes: likesNum + 1});
+      ret(ctx, 200);
+    } else if (type === "unlike") {
+      await UserLikes.findOneAndRemove({uid, aid});
+      await News.findOneAndUpdate({_id: getId(aid)}, {likes: likesNum - 1});
+      ret(ctx, 200);
+    } else {
+      ret(ctx, 401);
+    }
+  } catch (e) {
+    console.log(e);
+    ret(ctx, 500);
+  }
 };
 
 

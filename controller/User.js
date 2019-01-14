@@ -25,8 +25,11 @@ const UserSchema = new Schema({
   phone:{type:Number},
   qq:{type:String},
   token:{type:String},
-  create_time: Date
+  create_time: Date,
+  collectedEntriesCount:{type: Number}
 }, { timestamps: true });
+
+UserSchema.index({userName: 1}, {unique: true});
 
 const Users = mongoose.model('Users',UserSchema);
 
@@ -43,7 +46,7 @@ const sha1 = require('sha1');
 const createToken = require('../token/createToken.js');
 const checkToken = require('../token/checkToken.js');
 //导入Lib
-const {getUrl} = require('../lib/index');
+const {getUrl, err} = require('../lib/index');
 const {base64_decode} = require("../lib/index");
 //数据库的操作
 
@@ -100,7 +103,6 @@ const Reg = async (ctx) => {
         code: 401
       }
     }
-    console.log("ctx.session.code", ctx.session.code);
     // 验证码判断
     if (code.toUpperCase() !== ctx.session.code) {
       ctx.body = {
@@ -120,38 +122,26 @@ const Reg = async (ctx) => {
     });
     //将objectid转换为用户创建时间(可以不用)
     user.create_time = moment(objectIdToTimestamp(user._id)).format('YYYY-MM-DD HH:mm:ss');
-    let doc = await Users.findOne({userName: user.userName});
-    if (doc) {
-      ctx.status = 200;
+    let res = await user.save();
+    if (res._id != null) {
+      console.log('注册成功');
       ctx.body = {
-        info: status[403000],
-        code: 403000
+        info: status[200],
+        code: 200,
+        data: {
+          _id: res._id,
+          userName,
+          token,
+        }
       }
     } else {
-      let res = await user.save();
-      if (res._id != null) {
-        console.log('注册成功');
-        ctx.body = {
-          info: status[200],
-          code: 200,
-          data: {
-            _id: res._id,
-            userName,
-            token,
-          }
-        }
-      } else {
-        ctx.body = {
-          code: 500,
-          info: "注册失败，服务器异常!"
-        }
+      ctx.body = {
+        code: 500,
+        info: "注册失败，服务器异常!"
       }
     }
   } catch (e) {
-    ctx.body = {
-      code: 500,
-      info: "注册失败，服务器异常!"
-    }
+    err(ctx, e);
   }
 };
 
