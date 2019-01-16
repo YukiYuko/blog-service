@@ -56,7 +56,9 @@ const {connect} = require('./database/init.js');
   app.use(koajwt({
     secret: TOKEN_ENCODE_STR
   }).unless({
-    path: [/\/users/, /\/other/, /\/admin\/login/, /\/admin\/register/, /\/admin\/insertUsers/, /\/touxiang/, /\/upload/]
+    path: [/\/users/, /\/other/, /\/admin\/login/,
+      /\/admin\/register/, /\/admin\/insertUsers/,
+      /\/touxiang/, /\/upload/, /\/news/, /\/comment/, /\/system\/tag\//]
   }));
 
   router.use('/news',News.routes());

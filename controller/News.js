@@ -19,7 +19,8 @@ const NewsSchema = new Schema({
 // 用户收藏表
 const UserLikeSchema = new Schema({
   uid: {type:String},
-  aid: {type:String}
+  aid: {type:String},
+  artList: {type: Schema.Types.ObjectId, ref: "News"}
 });
 UserLikeSchema.index({uid: 1, aid: 1}, {unique:true});
 
@@ -217,7 +218,8 @@ const LikeNews = async (ctx) => {
     if (type === "like") {
       let likes = new UserLikes({
         uid,
-        aid
+        aid,
+        artList: aid
       });
       await likes.save();
       await News.findOneAndUpdate({_id: getId(aid)}, {likes: likesNum + 1});
@@ -234,6 +236,24 @@ const LikeNews = async (ctx) => {
     ret(ctx, 500);
   }
 };
+// 喜欢列表
+const likeNewsList = async (ctx) => {
+  try {
+    let {
+      uid,
+      aid
+    } = ctx.query;
+    let doc = await UserLikes.find({uid}, 'artList').populate("artList");
+    ctx.status = 200;
+    ctx.body = {
+      info: "成功",
+      code: 200,
+      data: doc
+    }
+  } catch (e) {
+    console.log(e)
+  }
+};
 
 
 module.exports = {
@@ -242,5 +262,6 @@ module.exports = {
   NewsDetail,
   UpdateNews,
   SearchList,
-  LikeNews
+  LikeNews,
+  likeNewsList
 };

@@ -43,6 +43,8 @@ router.post('/newsUpdate', NewsController.UpdateNews);
 router.post('/search', NewsController.SearchList);
 // 喜欢
 router.post('/like', NewsController.LikeNews);
+// 喜欢列表
+router.get('/likeList', NewsController.likeNewsList);
 // 新建新闻
 router.post('/createNews', async (ctx) => {
   let data = ctx.request.body;
